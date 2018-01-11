@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This file is used to consume message continuously to a spicified topic.
+This file is used to consume message from a spicified topic.
 """
 
 
