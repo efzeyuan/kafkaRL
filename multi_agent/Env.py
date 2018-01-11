@@ -1,22 +1,32 @@
 from pykafka import KafkaClient
 import gym
+import argparse
 
-env = gym.make('CartPole-v0')
 
-client = KafkaClient("162.105.85.212:9092")
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
 
-topic_input = client.topics['cartpole-env-output']
-producer = topic_input.get_producer()
-producer.start()
-producer.produce(str(env.reset()))
+    parser.add_argument('--kafka_server', type=str, default="162.105.85.66:9092")
+    parser.add_argument('--read_topic', type=str, default='cartpole-env-input')
+    parser.add_argument('--write_topic', type=str, default='cartpole-env-output')
+    args = parser.parse_args()
 
-topic_output = client.topics['cartpole-env-input']
-consumer = topic_output.get_simple_consumer()
-for msg in consumer:
-    if msg is not None:
-        action = int(msg.value)
-	next_state, reward, done, _ = env.step(action)
-	producer.produce(str(next_state)+'|'+str(reward)+'|'+str(done))
-	if done is True:
-	    producer.produce(str(env.reset()))
+    env = gym.make('CartPole-v0')
+
+    client = KafkaClient(args.kafka_server)
+
+    topic_input = client.topics[args.write_topic]
+    producer = topic_input.get_producer()
+    producer.start()
+    producer.produce(str(env.reset()))
+
+    topic_output = client.topics[args.read_topic]
+    consumer = topic_output.get_simple_consumer()
+    for msg in consumer:
+        if msg is not None:
+            action = int(msg.value)
+            next_state, reward, done, _ = env.step(action)
+            producer.produce(str(next_state)+'|'+str(reward)+'|'+str(done))
+            if done is True:
+                producer.produce(str(env.reset()))
 

@@ -8,7 +8,7 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 
 import pdb
-
+import argparse
 from pykafka import KafkaClient
 import time
 
@@ -119,13 +119,20 @@ def format_feedback(feedback):
 
 
 if __name__ == '__main__':
-    client = KafkaClient("162.105.85.212:9092")
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--kafka_server', type=str, default="162.105.85.66:9092")
+    parser.add_argument('--read_topic', type=str, default='cartpole-env-output')
+    parser.add_argument('--write_topic', type=str, default='cartpole-env-input')
+    args = parser.parse_args()
+
+    client = KafkaClient(args.kafka_server)
     # print(client.topics)
-    topic_input = client.topics['cartpole-env-input']
+    topic_input = client.topics[args.write_topic]
     producer = topic_input.get_producer()
     producer.start()
 
-    topic_output = client.topics['cartpole-env-output']
+    topic_output = client.topics[args.read_topic]
     #consumer = topic_output.get_simple_consumer(consumer_group='agent', auto_commit_enable=True)
     consumer = topic_output.get_simple_consumer()
 
