@@ -38,7 +38,7 @@ print("Connect successfully")
 
 #start a consumer
 print("Starting a consumer of topic:%s" %(CONSUMER_TOPIC) )
-topic = client.topics[CONSUMER_TOPIC]
+topic = client.topics[CONSUMER_TOPIC.encode('utf-8')]
 consumer = topic.get_simple_consumer()
 print("The consumer has started successfully")
 
@@ -46,7 +46,8 @@ print("The consumer has started successfully")
 print("Start consuming message")
 for msg in consumer:
     try:
-        print('message content: %s   offset:%s' %(msg.value,msg.offset) )
+        
+        print('message content: %s   offset:%s' %(msg.value.decode('utf-8'),msg.offset) )
         time.sleep(1)
     except Exception as Error:
         pass

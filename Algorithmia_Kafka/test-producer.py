@@ -36,8 +36,8 @@ client = KafkaClient(kafka_server_address)
 print("Connect successfully")
 
 #start a producer
-print("Starting a producer of topic:%s" %(PRODUCER_TOPIC) )
-topic = client.topics[PRODUCER_TOPIC]
+print("Starting a producer of topic:%s" %(PRODUCER_TOPIC))
+topic = client.topics[PRODUCER_TOPIC.encode('utf-8')]
 producer = topic.get_producer()
 producer.start()
 print("The producer has started successfully")
@@ -47,10 +47,11 @@ print("Start producing message")
 i = 1
 while True:
     try:
-        producer.produce('remote message' + str(i))
+        message = 'remote message' + str(i)
+        producer.produce(message.encode('utf-8'))
         print("Produced a message to topic \"%s\" at %s" %(PRODUCER_TOPIC, time.asctime( time.localtime(time.time()) )))
         i = i + 1
         time.sleep(5)
     except Exception as Error:
-        pass
+        print(Error)
 
