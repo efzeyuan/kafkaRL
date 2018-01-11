@@ -1,6 +1,6 @@
 from pykafka import KafkaClient
 import gym
-import argparse
+import argparse, time
 
 
 if __name__ == '__main__':
@@ -22,11 +22,18 @@ if __name__ == '__main__':
 
     topic_output = client.topics[args.read_topic]
     consumer = topic_output.get_simple_consumer()
-    for msg in consumer:
-        if msg is not None:
+
+    offsets = topic_output.fetch_offset_limits(time.time() * 1000)[0][0][0]
+    while True:
+        try:
+            msg = consumer.consume()
             action = int(msg.value)
             next_state, reward, done, _ = env.step(action)
-            producer.produce(str(next_state)+'|'+str(reward)+'|'+str(done))
+            producer.produce(str(next_state) + '|' + str(reward) + '|' + str(done))
             if done is True:
                 producer.produce(str(env.reset()))
+        except Exception as Error:
+            pass
+
+
 

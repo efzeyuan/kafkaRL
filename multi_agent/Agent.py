@@ -69,11 +69,8 @@ class DQNCartPoleSolver():
         scores = deque(maxlen=100)
 
         for e in range(self.n_episodes):
-            for msg in consumer:
-                if msg is not None:
-                    state = msg.value
-                    break
-            state = format_state(state)
+            msg = consumer.consume()
+            state = format_state(msg.value)
             state = self.preprocess_state(state)
             done = False
             i = 0
@@ -81,12 +78,9 @@ class DQNCartPoleSolver():
             while not done:
                 action = self.choose_action(state, self.get_epsilon(e))
                 producer.produce(str(action))
-                for msg in consumer:
-                    if msg is not None:
-                        feedback = msg.value
-                        break
-#                pdb.set_trace()
-                next_state, reward, done = format_feedback(feedback)
+    #            pdb.set_trace()
+                msg = consumer.consume()
+                next_state, reward, done = format_feedback(msg.value)
                 next_state = self.preprocess_state(next_state)
                 self.remember(state, action, reward, next_state, done)
                 state = next_state
@@ -94,6 +88,7 @@ class DQNCartPoleSolver():
 
             scores.append(i)
             mean_score = np.mean(scores)
+	    print e
             if mean_score >= self.n_win_ticks and e >= 100:
                 if not self.quiet: print('Ran {} episodes. Solved after {} trials.'.format(e, e - 100))
                 return e - 100
@@ -114,7 +109,9 @@ def format_feedback(feedback):
     arr = feedback.split('|')
     next_state = format_state(arr[0])
     reward = int(float(arr[1]))
-    done = bool(arr[2])
+    done = False
+    if arr[2] == 'True':
+        done = True
     return next_state, reward, done
 
 
@@ -134,7 +131,7 @@ if __name__ == '__main__':
 
     topic_output = client.topics[args.read_topic]
     #consumer = topic_output.get_simple_consumer(consumer_group='agent', auto_commit_enable=True)
-    consumer = topic_output.get_simple_consumer()
+    consumer = topic_output.get_simple_consumer(reset_offset_on_start = False)
 
     agent = DQNCartPoleSolver()
     agent.run(producer, consumer)
