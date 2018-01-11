@@ -54,9 +54,9 @@ print("Connect successfully")
 
 #get topics
 print("getting topics...")
-input_topic = client.topics[INPUT_TOPIC]
+input_topic = client.topics[INPUT_TOPIC.encode('utf-8')]
 print("INPUT_TOPIC:%s" %(INPUT_TOPIC))
-output_topic = client.topics[OUTPUT_TOPIC]
+output_topic = client.topics[OUTPUT_TOPIC.encode('utf-8')]
 print("OUTPUT_TOPIC:%s" %(OUTPUT_TOPIC))
 
 #get Algorithmia user client key
@@ -84,11 +84,11 @@ output_producer.start()
 print("Start processing data")
 for message in input_comsumer:
     try:
-        input = message.value
+        input = message.value.decode('utf-8')
         print("input data: %s" %(input))
         output = str(algo.pipe(input).result)
         print("output data: %s" %(output))
-        output_producer.produce(output)
+        output_producer.produce(output.encode('utf-8'))
         time.sleep(1)
     except Exception as Error:
         print(Error)
