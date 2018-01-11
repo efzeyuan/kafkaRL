@@ -73,19 +73,20 @@ class DQNCartPoleSolver():
                 if msg is not None:
                     state = msg.value
                     break
-            state = np.fromstring(state.strip('[').strip(']'), sep=' ')
+            state = format_state(state)
             state = self.preprocess_state(state)
             done = False
             i = 0
-            pdb.set_trace()
+
             while not done:
                 action = self.choose_action(state, self.get_epsilon(e))
                 producer.produce(str(action))
                 for msg in consumer:
                     if msg is not None:
                         feedback = msg.value
-			break
-                next_state, reward, done, _ = self.env.step(action)
+                        break
+#                pdb.set_trace()
+                next_state, reward, done = format_feedback(feedback)
                 next_state = self.preprocess_state(next_state)
                 self.remember(state, action, reward, next_state, done)
                 state = next_state
@@ -105,6 +106,18 @@ class DQNCartPoleSolver():
         return e
 
 
+def format_state(state):
+    return np.fromstring(state.strip('[').strip(']'), sep=' ')
+
+
+def format_feedback(feedback):
+    arr = feedback.split('|')
+    next_state = format_state(arr[0])
+    reward = int(float(arr[1]))
+    done = bool(arr[2])
+    return next_state, reward, done
+
+
 if __name__ == '__main__':
     client = KafkaClient("162.105.85.212:9092")
     # print(client.topics)
@@ -113,7 +126,9 @@ if __name__ == '__main__':
     producer.start()
 
     topic_output = client.topics['cartpole-env-output']
+    #consumer = topic_output.get_simple_consumer(consumer_group='agent', auto_commit_enable=True)
     consumer = topic_output.get_simple_consumer()
 
     agent = DQNCartPoleSolver()
     agent.run(producer, consumer)
+

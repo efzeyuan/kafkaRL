@@ -17,3 +17,6 @@ for msg in consumer:
         action = int(msg.value)
 	next_state, reward, done, _ = env.step(action)
 	producer.produce(str(next_state)+'|'+str(reward)+'|'+str(done))
+	if done is True:
+	    producer.produce(str(env.reset()))
+
