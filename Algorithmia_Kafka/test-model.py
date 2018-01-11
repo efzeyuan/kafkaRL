@@ -18,18 +18,20 @@ INPUT_TOPIC = "test-input-topic"
 OUTPUT_TOPIC = "test-output-topic"
 ALGORITHMIA_USER_KEY = 'sim0p9Q80e7GOrE1/4Vb6MLeVMg1'
 ALGORITHMIA_MODEL = 'efzeyuan/Hello/0.1.0'
+FROM_THE_LATEST_START = False
 
 '''
 operate args, usage:
     -p                KAFKA_SERVER_PORT
     -k                ALGORITHMIA_USER_KEY
     -m                ALGORITHMIA_MODEL
+    -l                only consume latest message if selected
     --input_topic     KAFKA_INPUT_TOPIC
     --output_topic    KAFKA_OUTPUT_TOPIC
     --ip              KAFKA_SERVER_IP
 '''
 
-opts, args = getopt.getopt(sys.argv[1:], "p:k:m:", ["ip", "input_topic", "output_topic"])
+opts, args = getopt.getopt(sys.argv[1:], "p:k:m:l", ["ip", "input_topic", "output_topic"])
 for op, value in opts:
     if op == "-p":
         KAFKA_SERVER_PORT = value
@@ -37,6 +39,8 @@ for op, value in opts:
         ALGORITHMIA_USER_KEY = value
     elif op == "-m":
         ALGORITHMIA_MODEL = value
+    elif op == "-l":
+        FROM_THE_LATEST_START = True
     elif op == "input_topic":
         INPUT_TOPIC = value
     elif op == "output_topic":
@@ -52,10 +56,18 @@ print("Connecting Kafka server...address:%s" %(kafka_server_address) )
 client = KafkaClient(kafka_server_address)
 print("Connect successfully")
 
-#get topics
+#get topics and input topic offsets
 print("getting topics...")
 input_topic = client.topics[INPUT_TOPIC.encode('utf-8')]
 print("INPUT_TOPIC:%s" %(INPUT_TOPIC))
+offsets = -1
+if FROM_THE_LATEST_START:
+    try:
+        offsets = input_topic.fetch_offset_limits(time.time() * 1000)[0][0][0]
+    except:
+        pass
+print("topic offsets: %d" %(offsets + 1))
+
 output_topic = client.topics[OUTPUT_TOPIC.encode('utf-8')]
 print("OUTPUT_TOPIC:%s" %(OUTPUT_TOPIC))
 
@@ -84,11 +96,12 @@ output_producer.start()
 print("Start processing data")
 for message in input_comsumer:
     try:
-        input = message.value.decode('utf-8')
-        print("input data: %s" %(input))
-        output = str(algo.pipe(input).result)
-        print("output data: %s" %(output))
-        output_producer.produce(output.encode('utf-8'))
-        time.sleep(1)
+        if message.offset > offsets:
+            input = message.value.decode('utf-8')
+            print("input data: %s" %(input))
+            output = str(algo.pipe(input).result)
+            print("output data: %s" %(output))
+            output_producer.produce(output.encode('utf-8'))
+            time.sleep(1)
     except Exception as Error:
         print(Error)

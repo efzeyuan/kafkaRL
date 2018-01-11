@@ -44,13 +44,11 @@ print("The producer has started successfully")
 
 #produce simple message
 print("Start producing message")
-i = 1
 while True:
     try:
-        message = 'remote message' + str(i)
+        message = 'remote message:' + time.asctime( time.localtime(time.time()) )
         producer.produce(message.encode('utf-8'))
         print("Produced a message to topic \"%s\" at %s" %(PRODUCER_TOPIC, time.asctime( time.localtime(time.time()) )))
-        i = i + 1
         time.sleep(5)
     except Exception as Error:
         print(Error)
