@@ -16,12 +16,12 @@ if __name__ == '__main__':
     client = KafkaClient(args.kafka_server)
 
     topic_input = client.topics[args.write_topic]
-    producer = topic_input.get_producer()
+    producer = topic_input.get_producer(linger_ms=0, min_queued_messages=1)
     producer.start()
     producer.produce(str(env.reset()))
 
     topic_output = client.topics[args.read_topic]
-    consumer = topic_output.get_simple_consumer()
+    consumer = topic_output.get_simple_consumer(consumer_group='agent', auto_commit_enable=True, fetch_wait_max_ms=0)
 
     offsets = topic_output.fetch_offset_limits(time.time() * 1000)[0][0][0]
     while True:

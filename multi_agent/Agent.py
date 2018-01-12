@@ -70,6 +70,7 @@ class DQNCartPoleSolver():
 
         for e in range(self.n_episodes):
             msg = consumer.consume()
+         #   print msg.value
             state = format_state(msg.value)
             state = self.preprocess_state(state)
             done = False
@@ -80,6 +81,7 @@ class DQNCartPoleSolver():
                 producer.produce(str(action))
     #            pdb.set_trace()
                 msg = consumer.consume()
+        #        print msg.value
                 next_state, reward, done = format_feedback(msg.value)
                 next_state = self.preprocess_state(next_state)
                 self.remember(state, action, reward, next_state, done)
@@ -88,7 +90,7 @@ class DQNCartPoleSolver():
 
             scores.append(i)
             mean_score = np.mean(scores)
-	    print e
+#	    print e
             if mean_score >= self.n_win_ticks and e >= 100:
                 if not self.quiet: print('Ran {} episodes. Solved after {} trials.'.format(e, e - 100))
                 return e - 100
@@ -126,12 +128,12 @@ if __name__ == '__main__':
     client = KafkaClient(args.kafka_server)
     # print(client.topics)
     topic_input = client.topics[args.write_topic]
-    producer = topic_input.get_producer()
+    producer = topic_input.get_producer(linger_ms=0, min_queued_messages=1)
     producer.start()
 
     topic_output = client.topics[args.read_topic]
-    #consumer = topic_output.get_simple_consumer(consumer_group='agent', auto_commit_enable=True)
-    consumer = topic_output.get_simple_consumer(reset_offset_on_start = False)
+    consumer = topic_output.get_simple_consumer(consumer_group='agent', auto_commit_enable=True, fetch_wait_max_ms=0)
+    #consumer = topic_output.get_simple_consumer(reset_offset_on_start = False)
 
     agent = DQNCartPoleSolver()
     agent.run(producer, consumer)
