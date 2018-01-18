@@ -1,6 +1,6 @@
 # Start the server
-1.  /home/luwei/kafka/kafka_2.11-1.0.0/bin/zookeeper-server-start.sh config/zookeeper.properties
-2.  /home/luwei/kafka/kafka_2.11-1.0.0/bin/kafka-server-start.sh config/server.properties
+1.  /home/luwei/kafka/kafka_2.11-1.0.0/bin/zookeeper-server-start.sh /home/luwei/kafka/kafka_2.11-1.0.0/config/zookeeper.properties
+2.  /home/luwei/kafka/kafka_2.11-1.0.0/bin/kafka-server-start.sh /home/luwei/kafka/kafka_2.11-1.0.0/config/server.properties
 
 # list topic
 /home/luwei/kafka/kafka_2.11-1.0.0/bin/kafka-topics.sh --list --zookeeper localhost:2181
